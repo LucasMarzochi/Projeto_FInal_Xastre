@@ -1,0 +1,76 @@
+version: "3.8"
+
+services:
+  app:
+    image: laravel:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    working_dir: /var/www/
+    volumes:
+      - app-data:/var/www
+    networks:
+      - mynetwork
+
+  mysql:
+    image: mysql:8.0.30
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: sys
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - mynetwork
+
+  nginx:
+    image: nginx:alpine
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "8085:80"
+    volumes:
+      - app-data:/var/www
+      - nginx-config:/etc/nginx/conf.d
+    networks:
+      - mynetwork
+
+  redis:
+    image: redis:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+
+volumes:
+  app-data:
+    driver: local
+    driver_opts:
+      o: bind
+      device: ./
+      type: none
+  mysql-data:
+    driver: local
+    driver_opts:
+      o: bind
+      device: ./.docker/mysql/data
+      type: none
+  nginx-config:
+    driver: local
+    driver_opts:
+      o: bind
+      device: ./.docker/nginx
+      type: none
